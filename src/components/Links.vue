@@ -41,12 +41,22 @@
 </template>
 
 <script setup>
+// =============================
+import { computed, onMounted } from 'vue';
+// =============================
+
 import { Icon } from "@vicons/utils";
 // 可前往 https://www.xicons.org 自行挑选并在此处引入
-import { Link, Blog, CompactDisc, Cloud, Compass, Book, Fire, LaptopCode } from "@vicons/fa"; // 注意使用正确的类别
+import { Blog, Music, Compass } from "@vicons/fa"; // 注意使用正确的类别
 import { mainStore } from "@/store";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import { Pagination, Mousewheel } from "swiper/modules";
+
+// =============================
+import 'swiper/css';
+import 'swiper/css/pagination';
+// =============================
+
 import siteLinks from "@/assets/siteLinks.json";
 
 const store = mainStore();
@@ -64,12 +74,8 @@ const siteLinksList = computed(() => {
 // 网站链接图标
 const siteIcon = {
   Blog,
-  Cloud,
-  CompactDisc,
+  Music,
   Compass,
-  Book,
-  Fire,
-  LaptopCode,
 };
 
 // 链接跳转
