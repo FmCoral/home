@@ -18,7 +18,7 @@
 </template>
 
 <script setup>
-import { getAdcode, getWeather, getOtherWeather } from "@/api";
+import { getAdcode, getWeather, getRegeo, getOtherIp } from "@/api";
 import { Error } from "@icon-park/vue-next";
 
 // 高德开发者 Key
@@ -38,57 +38,95 @@ const weatherData = reactive({
   },
 });
 
-// 取出天气平均值
-const getTemperature = (min, max) => {
-  try {
-    // 计算平均值并四舍五入
-    const average = (Number(min) + Number(max)) / 2;
-    return Math.round(average);
-  } catch (error) {
-    console.error("计算温度出现错误：", error);
-    return "NaN";
-  }
-};
-
 // 获取天气数据
 const getWeatherData = async () => {
   try {
-    // 获取地理位置信息
+    // 验证 Key 是否存在
     if (!mainKey) {
-      console.log("未配置，使用备用天气接口");
-      const result = await getOtherWeather();
-      console.log(result);
-      const data = result.result;
-      weatherData.adCode = {
-        city: data.city.City || "未知地区",
-        // adcode: data.city.cityId,
-      };
-      weatherData.weather = {
-        weather: data.condition.day_weather,
-        temperature: getTemperature(data.condition.min_degree, data.condition.max_degree),
-        winddirection: data.condition.day_wind_direction,
-        windpower: data.condition.day_wind_power,
-      };
-    } else {
-      // 获取 Adcode
-      const adCode = await getAdcode(mainKey);
-      console.log(adCode);
-      if (adCode.infocode !== "10000") {
-        throw "地区查询失败";
-      }
-      weatherData.adCode = {
-        city: adCode.city,
-        adcode: adCode.adcode,
-      };
-      // 获取天气信息
-      const result = await getWeather(mainKey, weatherData.adCode.adcode);
-      weatherData.weather = {
-        weather: result.lives[0].weather,
-        temperature: result.lives[0].temperature,
-        winddirection: result.lives[0].winddirection,
-        windpower: result.lives[0].windpower,
-      };
+      throw "未配置高德地图 Key";
     }
+
+    let adcode = null;
+    let city = null;
+
+    // 1. 优先尝试浏览器地理位置定位（用户授权）
+    try {
+      console.log("尝试使用浏览器定位...");
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          timeout: 5000,
+        });
+      });
+      const location = `${position.coords.longitude},${position.coords.latitude}`;
+      const regeoResult = await getRegeo(mainKey, location);
+      if (regeoResult.infocode === "10000") {
+        adcode = regeoResult.regeocode.addressComponent.adcode;
+        city = regeoResult.regeocode.addressComponent.city || regeoResult.regeocode.addressComponent.province;
+        console.log("浏览器定位成功:", city);
+      }
+    } catch (error) {
+      console.warn("浏览器定位失败或用户拒绝授权:", error);
+
+      // 2. 浏览器定位失败，尝试高德 IP 定位
+      try {
+        console.log("尝试使用高德 IP 定位...");
+        const ipResult = await getAdcode(mainKey);
+        if (
+          ipResult.infocode === "10000" &&
+          ipResult.adcode &&
+          typeof ipResult.adcode === "string"
+        ) {
+          adcode = ipResult.adcode;
+          city = ipResult.city;
+          console.log("高德 IP 定位成功:", city);
+        }
+      } catch (error) {
+        console.warn("高德 IP 定位失败:", error);
+      }
+
+      // 3. 高德 IP 定位也失败，尝试第三方 IP 定位（无感）
+      if (!adcode) {
+        try {
+          console.log("尝试使用第三方 IP 定位...");
+          const otherIpResult = await getOtherIp();
+          if (otherIpResult.success) {
+            const location = `${otherIpResult.longitude},${otherIpResult.latitude}`;
+            const regeoResult = await getRegeo(mainKey, location);
+            if (regeoResult.infocode === "10000") {
+              adcode = regeoResult.regeocode.addressComponent.adcode;
+              city = regeoResult.regeocode.addressComponent.city || regeoResult.regeocode.addressComponent.province;
+              console.log("第三方 IP 定位成功:", city);
+            }
+          }
+        } catch (error) {
+          console.warn("第三方 IP 定位失败:", error);
+        }
+      }
+    }
+
+    // 4. 如果所有定位都失败，降级到默认城市（北京: 110000）
+    if (!adcode) {
+      console.warn("定位全部失败，使用默认城市（北京）");
+      adcode = "110000";
+      city = "北京市";
+    }
+
+    weatherData.adCode = {
+      city: city,
+      adcode: adcode,
+    };
+
+    // 获取天气信息
+    const result = await getWeather(mainKey, weatherData.adCode.adcode);
+    if (!result.lives || result.lives.length === 0) {
+      throw "天气数据为空";
+    }
+    weatherData.weather = {
+      weather: result.lives[0].weather,
+      temperature: result.lives[0].temperature,
+      winddirection: result.lives[0].winddirection,
+      windpower: result.lives[0].windpower,
+    };
   } catch (error) {
     console.error("天气信息获取失败:" + error);
     onError("天气信息获取失败");

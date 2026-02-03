@@ -2,16 +2,16 @@
   {
     "icon": "Blog",
     "name": "博客",
-    "link": "https://fmcoral.xyz/blog/"
+    "link": "https://blog.fmcoral.xyz"
   },
   {
     "icon": "Music",
     "name": "音乐",
-    "link": "https://fmcoral.xyz/music/"
+    "link": "https://music.fmcoral.xyz"
   },
   {
     "icon": "Compass",
     "name": "起始页",
-    "link": "https://fmcoral.xyz/"
+    "link": "https://www.fmcoral.xyz/"
   }
 ]

@@ -49,6 +49,41 @@ export const getHitokoto = async () => {
   return await res.json();
 };
 
+// 获取第三方 IP 定位
+export const getOtherIp = async () => {
+  // 优先尝试 ip-api.com
+  try {
+    const res = await fetch("http://ip-api.com/json/?lang=zh-CN");
+    const data = await res.json();
+    if (data.status === "success") {
+      return {
+        success: true,
+        longitude: data.lon,
+        latitude: data.lat,
+      };
+    }
+  } catch (error) {
+    console.warn("ip-api.com 请求失败", error);
+  }
+
+  // 降级尝试 ipwho.is
+  try {
+    const res = await fetch("https://ipwho.is/");
+    const data = await res.json();
+    if (data.success) {
+      return {
+        success: true,
+        longitude: data.longitude,
+        latitude: data.latitude,
+      };
+    }
+  } catch (error) {
+    console.warn("ipwho.is 请求失败", error);
+  }
+
+  return { success: false };
+};
+
 /**
  * 天气
  */
@@ -67,9 +102,10 @@ export const getWeather = async (key, city) => {
   return await res.json();
 };
 
-// 获取教书先生天气 API
-// https://api.oioweb.cn/doc/weather/GetWeather
-export const getOtherWeather = async () => {
-  const res = await fetch("https://api.oioweb.cn/api/weather/GetWeather");
+// 获取高德逆地理编码
+export const getRegeo = async (key, location) => {
+  const res = await fetch(
+    `https://restapi.amap.com/v3/geocode/regeo?key=${key}&location=${location}`,
+  );
   return await res.json();
 };
