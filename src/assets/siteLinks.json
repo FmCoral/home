@@ -2,16 +2,21 @@
   {
     "icon": "Blog",
     "name": "博客",
-    "link": "https://blog.fmcoral.xyz"
+    "link": "https://blog.fmcoral.com"
   },
   {
     "icon": "Music",
-    "name": "音乐",
-    "link": "https://music.fmcoral.xyz"
+    "name": "发癫",
+    "link": "https://blog.fmcoral.com/emo.html"
   },
   {
-    "icon": "Compass",
-    "name": "起始页",
-    "link": "https://www.fmcoral.xyz/"
+    "icon": "Images",
+    "name": "相册",
+    "link": "https://blog.fmcoral.com/photos.html"
+  },
+  {
+    "icon": "InfoCircle",
+    "name": "关于",
+    "link": "https://blog.fmcoral.com/about.html"
   }
 ]
